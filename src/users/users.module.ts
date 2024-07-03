@@ -4,6 +4,10 @@ import { Mongoose } from 'mongoose';
 import { User, userSchema } from 'src/schemas/User.schema';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
+import {
+  UserSettings,
+  userSettingsSchema,
+} from 'src/schemas/UserSettings.schema';
 
 @Module({
   imports: [
@@ -11,6 +15,10 @@ import { UsersController } from './users.controller';
       {
         name: User.name,
         schema: userSchema,
+      },
+      {
+        name: UserSettings.name,
+        schema: userSettingsSchema,
       },
     ]),
   ],

@@ -9,13 +9,29 @@ import mongoose, { Model } from 'mongoose';
 import { User } from 'src/schemas/User.schema';
 import { CreateUserDto } from './dto/CreateUser.dto';
 import { UpdateUserDto } from './dto/UpdateUser.dto';
+import { UserSettings } from 'src/schemas/UserSettings.schema';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(UserSettings.name)
+    private userSettingsModel: Model<UserSettings>,
+  ) {}
 
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
-    const newUser = this.userModel.create(createUserDto);
+  async createUser({
+    settings,
+    ...createUserDto
+  }: CreateUserDto): Promise<User> {
+    if (settings) {
+      const newSettings = await this.userSettingsModel.create(settings);
+
+      return await this.userModel.create({
+        ...createUserDto,
+        settings: newSettings._id,
+      });
+    }
+    const newUser = await this.userModel.create(createUserDto);
 
     return newUser;
   }
@@ -41,7 +57,7 @@ export class UsersService {
   }
 
   async getAllUsers() {
-    const newUser = this.userModel.find();
+    const newUser = this.userModel.find().populate(['settings', 'posts']);
     return newUser;
   }
 
@@ -51,7 +67,9 @@ export class UsersService {
     if (!isValidId) {
       throw new BadRequestException('Please enter correct id');
     }
-    const getUser = await this.userModel.findById(id).exec();
+    const getUser = (await this.userModel.findById(id).exec()).populate(
+      'settings',
+    );
     if (!getUser) {
       throw new NotFoundException('User not found');
     }
